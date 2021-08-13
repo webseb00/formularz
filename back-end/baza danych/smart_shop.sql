@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Czas generowania: 28 Lip 2021, 14:01
+-- Czas generowania: 14 Sie 2021, 00:32
 -- Wersja serwera: 10.4.11-MariaDB
 -- Wersja PHP: 7.4.1
 
@@ -30,30 +30,14 @@ SET time_zone = "+00:00";
 
 CREATE TABLE `clients` (
   `client_id` int(10) UNSIGNED NOT NULL,
-  `firstname` varchar(30) NOT NULL,
-  `lastname` varchar(30) NOT NULL,
-  `email` varchar(30) NOT NULL,
-  `country` varchar(30) NOT NULL,
-  `city` varchar(30) NOT NULL,
-  `street` varchar(30) NOT NULL,
-  `zipCode` varchar(7) NOT NULL,
-  `phone` int(9) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- --------------------------------------------------------
-
---
--- Struktura tabeli dla tabeli `details`
---
-
-CREATE TABLE `details` (
-  `order_id` int(10) UNSIGNED NOT NULL,
-  `method` varchar(30) NOT NULL,
-  `payment` varchar(30) NOT NULL,
-  `cost` int(10) NOT NULL,
-  `productName` varchar(30) NOT NULL,
-  `quantity` varchar(30) NOT NULL,
-  `price` int(10) NOT NULL
+  `Imie` varchar(30) NOT NULL,
+  `Nazwisko` varchar(30) NOT NULL,
+  `Email` varchar(30) NOT NULL,
+  `Kraj` varchar(30) NOT NULL,
+  `Miejscowosc` varchar(30) NOT NULL,
+  `Ulica` varchar(30) NOT NULL,
+  `Kod_pocztowy` varchar(7) NOT NULL,
+  `Telefon` varchar(9) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
@@ -76,6 +60,33 @@ INSERT INTO `discount-codes` (`code_id`, `discount_code`, `isValid`) VALUES
 (1, '#AC479K21', 1),
 (2, '#3617ZKXO', 0);
 
+-- --------------------------------------------------------
+
+--
+-- Struktura tabeli dla tabeli `orders`
+--
+
+CREATE TABLE `orders` (
+  `order_id` int(10) UNSIGNED NOT NULL,
+  `Dostawa` varchar(30) NOT NULL,
+  `Platnosc` varchar(30) NOT NULL,
+  `Koszt` float NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
+
+--
+-- Struktura tabeli dla tabeli `products`
+--
+
+CREATE TABLE `products` (
+  `product_id` int(11) NOT NULL,
+  `Nazwa` varchar(30) NOT NULL,
+  `Ilosc` int(11) NOT NULL,
+  `Cena_jednostkowa` float NOT NULL,
+  `Cena_calkowita` float NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 --
 -- Indeksy dla zrzutów tabel
 --
@@ -87,16 +98,22 @@ ALTER TABLE `clients`
   ADD PRIMARY KEY (`client_id`);
 
 --
--- Indeksy dla tabeli `details`
---
-ALTER TABLE `details`
-  ADD PRIMARY KEY (`order_id`);
-
---
 -- Indeksy dla tabeli `discount-codes`
 --
 ALTER TABLE `discount-codes`
   ADD PRIMARY KEY (`code_id`);
+
+--
+-- Indeksy dla tabeli `orders`
+--
+ALTER TABLE `orders`
+  ADD PRIMARY KEY (`order_id`);
+
+--
+-- Indeksy dla tabeli `products`
+--
+ALTER TABLE `products`
+  ADD PRIMARY KEY (`product_id`);
 
 --
 -- AUTO_INCREMENT for dumped tables
@@ -106,19 +123,25 @@ ALTER TABLE `discount-codes`
 -- AUTO_INCREMENT dla tabeli `clients`
 --
 ALTER TABLE `clients`
-  MODIFY `client_id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
-
---
--- AUTO_INCREMENT dla tabeli `details`
---
-ALTER TABLE `details`
-  MODIFY `order_id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
+  MODIFY `client_id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT dla tabeli `discount-codes`
 --
 ALTER TABLE `discount-codes`
   MODIFY `code_id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT dla tabeli `orders`
+--
+ALTER TABLE `orders`
+  MODIFY `order_id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT dla tabeli `products`
+--
+ALTER TABLE `products`
+  MODIFY `product_id` int(11) NOT NULL AUTO_INCREMENT;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

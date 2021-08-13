@@ -1,138 +1,94 @@
 <?php 
 
-  session_start();
-
-  header("Access-Control-Allow-Origin: *");
-  header("Access-Control-Allow-Headers: Content-Type, origin");
-  header("Access-Control-Allow-Credentials: true");
-  header("Access-Control-Max-Age: 1000");
-  header("Access-Control-Allow-Headers: X-Requested-With, Content-Type, Origin, Cache-Control, Pragma, Authorization, Accept, Accept-Encoding");
-  header("Access-Control-Allow-Methods: PUT, POST, GET, OPTIONS, DELETE");
-
+  require_once('headers.php');
   require_once('dbConfig.php');
+  require_once('database.php');
+  require_once('client.php');
+  require_once('order.php');
+  require_once('product.php');
+  require_once('validation.php');
 
-  // make connection to the database
-  $connection = @new mysqli($db_host, $db_user, $db_password, $db_name);
-
-  if ($connection->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-  }
-
-  // get raw data from the front-end and return as an array
+  // set connection to the database
+  $conn = new Database($db_host, $db_user, $db_password, $db_name);
+  $connection = $conn->createConnection();
+  
   $data = json_decode(file_get_contents("php://input"), true);
 
-  // SCRIPT FOR HANDLING DISCOUNT CODE
-  if(isset($data['discountCode'])) {
-    function compareCodes() {
-      global $connection;
-
-      $sql = "SELECT * FROM `discount-codes`";
-      $result = $connection->query($sql);
-      $rowsLength = $result->num_rows;
-
-      $array_codes = array(); 
-
-      if($rowsLength > 0) {
-        while($row = $result->fetch_assoc()) {
-          array_push($array_codes, $row);
-        }
-      }
-
-      $obj = json_encode($array_codes);
-      
-      echo $obj;   
-    }
-    compareCodes();
-  } 
-
-  // SCRIPT FOR HANDLING USER ORDER
-  
   if(isset($data['client']) && isset($data['orderDetails'])) {
-    $client = $data['client'];
-    $details = $data['orderDetails'];
+    //-------------------------//
+    // handle client details data
+    $clientValidation = new Validation();
+    $clientValidation->validate_client_data($data['client']);
 
-    function createClientsTable() {
-      global $connection, $client;
-      // get values and escape special characters for SQL query
-      $firstname = mysqli_real_escape_string($connection, $client['firstName']);
-      $lastname = mysqli_real_escape_string($connection, $client['lastName']);
-      $email = mysqli_real_escape_string($connection, $client['email']);
-      $country = mysqli_real_escape_string($connection, $client['state']);
-      $street = mysqli_real_escape_string($connection, $client['street']);
-      $city = mysqli_real_escape_string($connection, $client['city']);
-      $zipcode = mysqli_real_escape_string($connection, $client['zipCode']);
-      $phone = mysqli_real_escape_string($connection, $client['phoneNumber']);
-  
-      $table_clients_sql = "CREATE TABLE Clients (
-        client_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-        firstname VARCHAR(30) NOT NULL,
-        lastname VARCHAR(30) NOT NULL,
-        email VARCHAR(30) NOT NULL,
-        country VARCHAR(30) NOT NULL,
-        city VARCHAR(30) NOT NULL,
-        street VARCHAR(30) NOT NULL,
-        zipCode VARCHAR(7) NOT NULL,
-        phone INT(9) NOT NULL
-      )";
+    $checkClient = $clientValidation->checkDataValidity('client');
     
-      $connection->query($table_clients_sql);
-  
-      // insert clients data into table clients
-      $client_sql = "INSERT INTO Clients (firstname, lastname, email, country, city, street, zipCode, phone)
-      VALUES ('$firstname', '$lastname','$email', '$country', '$city', '$street','$zipcode', '$phone')";
-  
-      $connection->query($client_sql);
-    }
-    // call createClientsTable for creating table and inserting users data
-    createClientsTable();
-  
-    function createOrderDetailsTable() {
-      global $connection, $details;
-  
-      $methodName = mysqli_real_escape_string($connection, $details['deliveryMethod']);
-      $cost = mysqli_real_escape_string($connection, $details['deliveryCost']);
-      $payment = mysqli_real_escape_string($connection, $details['paymentMethod']);
-      $productName = mysqli_real_escape_string($connection, $details['productName']);
-      $productPrice = mysqli_real_escape_string($connection, $details['productPrice']);
-      $productQuantity = mysqli_real_escape_string($connection, $details['productQuantity']);
-  
-      $table_order_sql = "CREATE TABLE details (
-        order_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-        method VARCHAR(30) NOT NULL,
-        payment VARCHAR(30) NOT NULL,
-        cost INT(10) NOT NULL,
-        productName VARCHAR(30) NOT NULL,
-        quantity VARCHAR(30) NOT NULL,
-        price INT(10) NOT NULL
-      )";
-  
-      $connection->query($table_order_sql);
-  
-      // insert order data details into table
-      $order_sql = "INSERT INTO details (method, payment, cost, productName, quantity, price)
-      VALUES ('$methodName', '$payment', '$cost', '$productName', '$productQuantity', '$productPrice')";
-  
-      $connection->query($order_sql);
-    }
-  
-    createOrderDetailsTable();
-  
-    function sendResponse() {
-      global $connection;
-  
-      header("Content-type: application/json; charset=utf-8");
-      // fetch last id from the database and send to the server as a order number
-      $sql = 'SELECT `order_id` FROM details ORDER BY `order_id` DESC LIMIT 1';
-      $result = $connection->query($sql);
-      $row = $result->fetch_assoc();
-  
-      echo $row['order_id'];
-    }
-    sendResponse();
-	} else {
-    exit();
-  }
+    //-------------------------//
+    // handle order details data
+    $orderDetails = array();
+    
+    $orderDetails['deliveryMethod'] = $data['orderDetails']['deliveryMethod'];
+    $orderDetails['deliveryCost'] = $data['orderDetails']['deliveryCost'];
+    $orderDetails['paymentMethod'] = $data['orderDetails']['paymentMethod'];
 
-  $connection->close();
+    $orderValidation = new Validation();
+    $orderValidation->validate_order_data($orderDetails);
 
+    $checkOrder = $clientValidation->checkDataValidity('order');
+
+    //-------------------------//
+    // handle product details data
+    $productDetails = array();
+
+    $productDetails['productName'] = $data['orderDetails']['productName'];
+    $productDetails['productQuantity'] = $data['orderDetails']['productQuantity'];
+    $productDetails['productPrice'] = $data['orderDetails']['productPrice'];
+
+    $productValidation = new Validation();
+    $productValidation->validate_product_data($productDetails);
+
+    $checkProduct = $clientValidation->checkDataValidity('product');
+
+    // if all data are valid, create instances and pass them to the database
+    if($checkClient && $checkOrder && $checkProduct) {  
+      /* /////////////////////// */
+      // 1. Client data
+      /* /////////////////////// */
+
+      // get validated client data
+      $validClientData = $clientValidation->getClientValidData();
+      // create new Client instance based on validated client data
+      $newClient = new Client($validClientData);
+      // sanitazed and validated client data pass to the database and save   
+      $conn->addClientDetails($newClient, $connection);
+
+      /* /////////////////////// */
+      // 2. Order data
+      /* /////////////////////// */
+
+      $orderValidData = $orderValidation->getOrderValidData();
+      $newOrderDetails = new Order($orderValidData);
+      $conn->addOrderDetails($newOrderDetails, $connection);
+
+      /* /////////////////////// */
+      // 3. Product data
+      /* /////////////////////// */
+      $productValidData = $productValidation->getProductValidData();
+      $newProduct = new Product($productValidData);
+      $conn->addProductDetails($newProduct, $connection);
+
+      // send back ID of order
+      $conn->getOrderID($connection);
+
+    } else {
+      // send error when form is not filled completely
+      $response = array(
+        "msg" => "Proszę uzupełnić wymagane dane",
+        "error" => true
+      );
+
+      echo json_encode($response);
+    }
+  } 
+  // close connection to the database
+  $conn->closeConnection($connection);
 ?>
