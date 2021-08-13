@@ -187,7 +187,7 @@ export default {
       
       axios({
         method: 'post',
-        url: 'http://localhost/osadnicy1/index.php',
+        url: 'http://localhost/phpForm/discount_codes.php',
         data: {
           discountCode
         }
@@ -248,19 +248,26 @@ export default {
 
       axios({
         method: 'post',
-        url: 'http://localhost/osadnicy1/index.php',
+        url: 'http://localhost/phpForm/index.php',
         data: orderData
       })
       .then(res => {
         /* 
           !!! FUNCTION SETIMEOUT is used only for simulating request to the server !!!
         */
-        setTimeout(() => {
+        console.log(res);
+        if(res.data.error) {
+          this.order.sending = !this.order.sending;
+          alert(res.data.msg);
+          return false;
+        } else {
+          setTimeout(() => {
           this.order.orderNumber = res.data;
           this.toggleModal('confirm-modal');
           this.order.sending = !this.order.sending;
           this.formSend = true;
         }, 3000);
+        }
       })
       .catch(err => console.log(err));
     }
